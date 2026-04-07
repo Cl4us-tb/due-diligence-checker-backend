@@ -26,7 +26,12 @@ public class SuppliersController : ControllerBase
         if (!TryGetUserId(out var userId)) return Unauthorized(new { message = "Token inválido o sin userId." });
         var command = SupplierCommandFromRequestAssembler.ToCommandFromRequest(request, userId);
         var supplierId = await _commandService.Handle(command);
-        return Ok(new { supplierId });
+
+        var supplier = await _queryService.Handle(SupplierQueryFromRequestAssembler.ToQuery(supplierId));
+        if (supplier == null) return NotFound();
+
+        var response = SupplierResponseFromEntityAssembler.ToResponseFromEntity(supplier);
+        return CreatedAtAction(nameof(GetById), new { supplierId }, response);
     }
 
     [HttpPut("{supplierId:int}")]
@@ -34,7 +39,7 @@ public class SuppliersController : ControllerBase
     {
         var command = SupplierCommandFromRequestAssembler.ToCommandFromRequest(supplierId, request);
         await _commandService.Handle(command);
-        return Ok();
+        return await OkSupplierResponse(supplierId);
     }
 
     [HttpDelete("{supplierId:int}")]
@@ -68,7 +73,7 @@ public class SuppliersController : ControllerBase
     {
         var command = SupplierCommandFromRequestAssembler.ToCommandFromRequest(supplierId, request);
         await _commandService.Handle(command);
-        return Ok();
+        return await OkSupplierResponse(supplierId);
     }
 
     [HttpPut("{supplierId:int}/representatives/{representativeId:int}")]
@@ -76,7 +81,7 @@ public class SuppliersController : ControllerBase
     {
         var command = SupplierCommandFromRequestAssembler.ToCommandFromRequest(supplierId, representativeId, request);
         await _commandService.Handle(command);
-        return Ok();
+        return await OkSupplierResponse(supplierId);
     }
 
     [HttpDelete("{supplierId:int}/representatives/{representativeId:int}")]
@@ -84,7 +89,14 @@ public class SuppliersController : ControllerBase
     {
         var command = SupplierCommandFromRequestAssembler.ToCommandFromRequest(supplierId, representativeId);
         await _commandService.Handle(command);
-        return Ok();
+        return await OkSupplierResponse(supplierId);
+    }
+
+    private async Task<IActionResult> OkSupplierResponse(int supplierId)
+    {
+        var supplier = await _queryService.Handle(SupplierQueryFromRequestAssembler.ToQuery(supplierId));
+        if (supplier == null) return NotFound();
+        return Ok(SupplierResponseFromEntityAssembler.ToResponseFromEntity(supplier));
     }
 
     private bool TryGetUserId(out int userId)

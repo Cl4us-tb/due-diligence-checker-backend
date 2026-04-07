@@ -4,6 +4,7 @@ using DueDiligenceChecker.Shared.Infrastructure.Persistence.EFC.Configuration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DueDiligenceChecker.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260407214500_SuppliersUniqueTaxId")]
+    partial class SuppliersUniqueTaxId
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -99,7 +102,7 @@ namespace DueDiligenceChecker.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("role");
 
-                    b.Property<int>("SupplierId")
+                    b.Property<int?>("SupplierId")
                         .HasColumnType("int")
                         .HasColumnName("supplier_id");
 
@@ -180,7 +183,6 @@ namespace DueDiligenceChecker.Migrations
                         .WithMany("Representatives")
                         .HasForeignKey("SupplierId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
                         .HasConstraintName("fk_representatives_suppliers_supplier_id");
                 });
 

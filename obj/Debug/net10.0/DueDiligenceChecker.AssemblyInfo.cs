@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("DueDiligenceChecker")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+631688b6ca2725d6b18101b7dd46aa007ff2e9df")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+dea6d65d5e1c070c29f37bde5661c80af73bc387")]
 [assembly: System.Reflection.AssemblyProductAttribute("DueDiligenceChecker")]
 [assembly: System.Reflection.AssemblyTitleAttribute("DueDiligenceChecker")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

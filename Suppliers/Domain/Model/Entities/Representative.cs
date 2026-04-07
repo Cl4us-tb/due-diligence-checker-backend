@@ -22,7 +22,7 @@ public class Representative
         FirstName = RequireNonEmpty(firstName, nameof(firstName));
         LastName = RequireNonEmpty(lastName, nameof(lastName));
         Age = age;
-        Nationality = nationality;
+        Nationality = RequireNoDigitsOrNull(nationality, nameof(nationality));
     }
 
     internal void Update(string role, string firstName, string lastName, int? age, string? nationality)
@@ -31,13 +31,23 @@ public class Representative
         FirstName = RequireNonEmpty(firstName, nameof(firstName));
         LastName = RequireNonEmpty(lastName, nameof(lastName));
         Age = age;
-        Nationality = nationality;
+        Nationality = RequireNoDigitsOrNull(nationality, nameof(nationality));
     }
 
     private static string RequireNonEmpty(string value, string paramName)
     {
         if (string.IsNullOrWhiteSpace(value))
             throw new ArgumentException("El valor no puede estar vacío.", paramName);
+
+        return value;
+    }
+
+    private static string? RequireNoDigitsOrNull(string? value, string paramName)
+    {
+        if (value == null) return null;
+
+        if (value.Any(char.IsDigit))
+            throw new ArgumentException("La nacionalidad no puede contener números.", paramName);
 
         return value;
     }

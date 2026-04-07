@@ -20,6 +20,9 @@ public class SupplierCommandService : ISupplierCommandService
 
     public async Task<int> Handle(CreateSupplierCommand command)
     {
+        if (await _supplierRepository.ExistsByTaxIdAsync(command.TaxIdString))
+            throw new InvalidOperationException("Ya existe un proveedor con la misma identificación tributaria.");
+
         var supplier = new Supplier(
             command.CorporateName,
             command.TradeName,

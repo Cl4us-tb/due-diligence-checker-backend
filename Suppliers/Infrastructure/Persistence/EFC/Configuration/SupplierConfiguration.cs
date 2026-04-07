@@ -14,7 +14,8 @@ public class SupplierConfiguration : IEntityTypeConfiguration<Supplier>
 
         builder.OwnsOne(s => s.TaxId, taxId =>
         {
-            taxId.Property(t => t.Value).HasColumnName("tax_identification").IsRequired();
+            taxId.Property(t => t.Value).HasColumnName("tax_identification").HasMaxLength(11).IsRequired();
+            taxId.HasIndex(t => t.Value).IsUnique();
         });
 
         builder.OwnsOne(s => s.Billing, billing =>
@@ -25,6 +26,7 @@ public class SupplierConfiguration : IEntityTypeConfiguration<Supplier>
         builder.HasMany(s => s.Representatives)
             .WithOne()
             .HasForeignKey("SupplierId")
+            .IsRequired()
             .OnDelete(DeleteBehavior.Cascade);
 
         builder.Property(s => s.CorporateName).IsRequired();

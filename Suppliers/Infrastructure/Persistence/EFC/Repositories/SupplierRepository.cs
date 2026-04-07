@@ -14,6 +14,11 @@ public class SupplierRepository : ISupplierRepository
         _context = context;
     }
 
+    public async Task<bool> ExistsByTaxIdAsync(string taxId)
+    {
+        return await _context.Set<Supplier>().AnyAsync(s => s.TaxId.Value == taxId);
+    }
+
     public async Task AddAsync(Supplier entity)
     {
         await _context.Set<Supplier>().AddAsync(entity);

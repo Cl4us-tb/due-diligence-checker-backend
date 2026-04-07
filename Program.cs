@@ -22,6 +22,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
 using DueDiligenceChecker.Shared.Infrastructure.Swagger;
+using DueDiligenceChecker.Shared.Infrastructure.Errors;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -104,6 +105,8 @@ builder.Services.AddScoped<ISupplierQueryService, SupplierQueryService>();
 
 
 var app = builder.Build();
+
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 // 4. Asegurar que la base de datos se cree/actualice al iniciar
 using (var scope = app.Services.CreateScope())

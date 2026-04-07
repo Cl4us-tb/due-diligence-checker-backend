@@ -5,4 +5,5 @@ namespace DueDiligenceChecker.Suppliers.Domain.Repositories;
 
 public interface ISupplierRepository : IBaseRepository<Supplier>
 {
+    Task<bool> ExistsByTaxIdAsync(string taxId);
 }
