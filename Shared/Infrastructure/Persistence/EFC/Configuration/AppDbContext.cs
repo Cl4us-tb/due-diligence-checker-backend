@@ -3,6 +3,7 @@
 using Microsoft.EntityFrameworkCore;
 using DueDiligenceChecker.IAM.Domain.Model.Entities;
 using DueDiligenceChecker.IAM.Infrastructure.Persistence.EFC.Configuration;
+using DueDiligenceChecker.Suppliers.Domain.Model.Entities;
 
 public class AppDbContext : DbContext
 {
@@ -10,6 +11,8 @@ public class AppDbContext : DbContext
     {
     }
     public DbSet<User> Users { get; set; }
+    public DbSet<Supplier> Suppliers { get; set; }
+    public DbSet<Representative> Representatives { get; set; }
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
