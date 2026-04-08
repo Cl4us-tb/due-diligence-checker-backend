@@ -1,6 +1,5 @@
 using DueDiligenceChecker.Screening.Domain.Model.Queries;
 using DueDiligenceChecker.Screening.Interfaces.ACL;
-using DueDiligenceChecker.Shared.Domain.Repositories;
 using DueDiligenceChecker.Suppliers.Application.InboundServices;
 using DueDiligenceChecker.Suppliers.Domain.Model.Commands;
 using DueDiligenceChecker.Suppliers.Domain.Model.Entities.History;
@@ -12,23 +11,17 @@ namespace DueDiligenceChecker.Suppliers.Application.Internal.CommandServices;
 public class SupplierScreeningCommandService : ISupplierScreeningCommandService
 {
     private readonly ISupplierRepository _supplierRepository;
-    private readonly ISupplierScreeningRepository _supplierScreeningRepository;
     private readonly IScreeningContextFacade _screeningContextFacade;
-    private readonly IUnitOfWork _unitOfWork;
 
     public SupplierScreeningCommandService(
         ISupplierRepository supplierRepository,
-        ISupplierScreeningRepository supplierScreeningRepository,
-        IScreeningContextFacade screeningContextFacade,
-        IUnitOfWork unitOfWork)
+        IScreeningContextFacade screeningContextFacade)
     {
         _supplierRepository = supplierRepository;
-        _supplierScreeningRepository = supplierScreeningRepository;
         _screeningContextFacade = screeningContextFacade;
-        _unitOfWork = unitOfWork;
     }
 
-    public async Task<int> Handle(ExecuteSupplierScreeningCommand command, CancellationToken cancellationToken = default)
+    public async Task<SupplierScreening> Handle(ExecuteSupplierScreeningCommand command, CancellationToken cancellationToken = default)
     {
         if (command.Sources == null || command.Sources.Count == 0)
             throw new ArgumentException("Debe seleccionar al menos una fuente para ejecutar el screening.");
@@ -69,7 +62,11 @@ public class SupplierScreeningCommandService : ISupplierScreeningCommandService
             foreach (var representative in supplier.Representatives)
             {
                 var interpolItems = await _screeningContextFacade.CheckInterpolAsync(
-                    new InterpolRedNoticesQuery(representative.LastName, representative.FirstName),
+                    new InterpolRedNoticesQuery(
+                        representative.LastName,
+                        representative.FirstName,
+                        representative.Nationality,
+                        representative.Age),
                     cancellationToken);
 
                 foreach (var item in interpolItems)
@@ -106,9 +103,6 @@ public class SupplierScreeningCommandService : ISupplierScreeningCommandService
             }
         }
 
-        await _supplierScreeningRepository.AddAsync(screening);
-        await _unitOfWork.CompleteAsync();
-
-        return screening.SupplierScreeningId;
+        return screening;
     }
 }

@@ -13,11 +13,16 @@ public class SuppliersController : ControllerBase
 {
     private readonly ISupplierCommandService _commandService;
     private readonly ISupplierQueryService _queryService;
+    private readonly ISupplierScreeningCommandService _screeningCommandService;
 
-    public SuppliersController(ISupplierCommandService commandService, ISupplierQueryService queryService)
+    public SuppliersController(
+        ISupplierCommandService commandService,
+        ISupplierQueryService queryService,
+        ISupplierScreeningCommandService screeningCommandService)
     {
         _commandService = commandService;
         _queryService = queryService;
+        _screeningCommandService = screeningCommandService;
     }
 
     [HttpPost]
@@ -90,6 +95,18 @@ public class SuppliersController : ControllerBase
         var command = SupplierCommandFromRequestAssembler.ToCommandFromRequest(supplierId, representativeId);
         await _commandService.Handle(command);
         return await OkSupplierResponse(supplierId);
+    }
+
+    [HttpPost("{supplierId:int}/screenings")]
+    public async Task<IActionResult> ExecuteScreening(
+        [FromRoute] int supplierId,
+        [FromBody] ExecuteSupplierScreeningRequest request,
+        CancellationToken cancellationToken)
+    {
+        var command = SupplierScreeningCommandFromRequestAssembler.ToCommandFromRequest(supplierId, request);
+        var screening = await _screeningCommandService.Handle(command, cancellationToken);
+        var response = SupplierScreeningResponseFromEntityAssembler.ToResponseFromEntity(screening);
+        return Ok(response);
     }
 
     private async Task<IActionResult> OkSupplierResponse(int supplierId)
