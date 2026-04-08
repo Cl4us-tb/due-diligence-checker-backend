@@ -23,6 +23,11 @@ using System.Text;
 
 using DueDiligenceChecker.Shared.Infrastructure.Swagger;
 using DueDiligenceChecker.Shared.Infrastructure.Errors;
+using DueDiligenceChecker.Screening.Application.InboundServices;
+using DueDiligenceChecker.Screening.Application.Internal.QueryServices;
+using DueDiligenceChecker.Screening.Application.OutboundServices;
+using DueDiligenceChecker.Screening.Infrastructure.Scraping;
+using DueDiligenceChecker.Screening.Interfaces.ACL;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -36,6 +41,16 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
+
+builder.Services.AddHttpClient<ISecopScraper, SecopScraper>();
+builder.Services.AddScoped<IInterpolScraper, InterpolScraper>();
+builder.Services.AddScoped<ISmvScraper, SmvScraper>();
+
+builder.Services.AddScoped<ISecopQueryService, SecopQueryService>();
+builder.Services.AddScoped<IInterpolQueryService, InterpolQueryService>();
+builder.Services.AddScoped<ISmvQueryService, SmvQueryService>();
+
+builder.Services.AddScoped<IScreeningContextFacade, ScreeningContextFacade>();
 
 // Configurar autenticaciÃ³n JWT (provisional)
 var jwtSecret = builder.Configuration["JwtSettings:Secret"];
@@ -130,5 +145,4 @@ app.MapControllers();
 
 // UN SOLO app.Run() y nada mÃ¡s despuÃ©s de esto
 app.Run();
-
 
