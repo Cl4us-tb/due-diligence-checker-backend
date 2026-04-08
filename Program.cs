@@ -115,6 +115,7 @@ builder.Services.AddScoped<IUserCommandService, UserCommandService>();
 builder.Services.AddScoped<IUserQueryService, UserQueryService>();
 
 builder.Services.AddScoped<ISupplierRepository, SupplierRepository>();
+builder.Services.AddScoped<ISupplierScreeningRepository, SupplierScreeningRepository>();
 builder.Services.AddScoped<ISupplierCommandService, SupplierCommandService>();
 builder.Services.AddScoped<ISupplierQueryService, SupplierQueryService>();
 
@@ -145,4 +146,3 @@ app.MapControllers();
 
 // UN SOLO app.Run() y nada mÃ¡s despuÃ©s de esto
 app.Run();
-
