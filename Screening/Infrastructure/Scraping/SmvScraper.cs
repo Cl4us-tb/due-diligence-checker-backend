@@ -14,7 +14,7 @@ public class SmvScraper : ISmvScraper
         using var playwright = await Playwright.CreateAsync();
         await using var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true });
         var page = await browser.NewPageAsync();
-        page.SetDefaultTimeout(30000);
+        page.SetDefaultTimeout(60000);
 
         try
         {

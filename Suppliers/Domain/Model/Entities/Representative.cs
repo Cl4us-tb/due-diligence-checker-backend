@@ -21,8 +21,8 @@ public class Representative
         Role = RequireNonEmpty(role, nameof(role));
         FirstName = RequireNonEmpty(firstName, nameof(firstName));
         LastName = RequireNonEmpty(lastName, nameof(lastName));
-        Age = age;
-        Nationality = RequireNoDigitsOrNull(nationality, nameof(nationality));
+        Age = RequireAdultAgeOrNull(age, nameof(age));
+        Nationality = RequireNationalityCodeOrNull(nationality, nameof(nationality));
     }
 
     internal void Update(string role, string firstName, string lastName, int? age, string? nationality)
@@ -30,8 +30,8 @@ public class Representative
         Role = RequireNonEmpty(role, nameof(role));
         FirstName = RequireNonEmpty(firstName, nameof(firstName));
         LastName = RequireNonEmpty(lastName, nameof(lastName));
-        Age = age;
-        Nationality = RequireNoDigitsOrNull(nationality, nameof(nationality));
+        Age = RequireAdultAgeOrNull(age, nameof(age));
+        Nationality = RequireNationalityCodeOrNull(nationality, nameof(nationality));
     }
 
     private static string RequireNonEmpty(string value, string paramName)
@@ -42,13 +42,26 @@ public class Representative
         return value;
     }
 
-    private static string? RequireNoDigitsOrNull(string? value, string paramName)
+    private static int? RequireAdultAgeOrNull(int? value, string paramName)
+    {
+        if (value == null) return null;
+        if (value < 0) throw new ArgumentException("La edad no puede ser negativa.", paramName);
+        if (value < 18) throw new ArgumentException("La edad del representante debe ser mayor o igual a 18.", paramName);
+        return value;
+    }
+
+    private static string? RequireNationalityCodeOrNull(string? value, string paramName)
     {
         if (value == null) return null;
 
-        if (value.Any(char.IsDigit))
-            throw new ArgumentException("La nacionalidad no puede contener números.", paramName);
+        var trimmed = value.Trim();
+        if (trimmed.Length is < 2 or > 3)
+            throw new ArgumentException("La nacionalidad debe ser un código de 2 o 3 letras (ej: PE o PER).", paramName);
 
-        return value;
+        if (!trimmed.All(char.IsLetter))
+            throw new ArgumentException("La nacionalidad solo puede contener letras.", paramName);
+
+        return trimmed.ToUpperInvariant();
     }
 }
+

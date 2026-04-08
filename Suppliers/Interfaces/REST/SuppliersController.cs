@@ -1,4 +1,5 @@
 using DueDiligenceChecker.Suppliers.Application.InboundServices;
+using DueDiligenceChecker.Suppliers.Domain.Model.ValueObjects;
 using DueDiligenceChecker.Suppliers.Interfaces.REST.Resources;
 using DueDiligenceChecker.Suppliers.Interfaces.REST.Transform;
 using Microsoft.AspNetCore.Authorization;
@@ -14,15 +15,18 @@ public class SuppliersController : ControllerBase
     private readonly ISupplierCommandService _commandService;
     private readonly ISupplierQueryService _queryService;
     private readonly ISupplierScreeningCommandService _screeningCommandService;
+    private readonly ISupplierScreeningQueryService _screeningQueryService;
 
     public SuppliersController(
         ISupplierCommandService commandService,
         ISupplierQueryService queryService,
-        ISupplierScreeningCommandService screeningCommandService)
+        ISupplierScreeningCommandService screeningCommandService,
+        ISupplierScreeningQueryService screeningQueryService)
     {
         _commandService = commandService;
         _queryService = queryService;
         _screeningCommandService = screeningCommandService;
+        _screeningQueryService = screeningQueryService;
     }
 
     [HttpPost]
@@ -107,6 +111,20 @@ public class SuppliersController : ControllerBase
         var screening = await _screeningCommandService.Handle(command, cancellationToken);
         var response = SupplierScreeningResponseFromEntityAssembler.ToResponseFromEntity(screening);
         return Ok(response);
+    }
+
+    [HttpGet("{supplierId:int}/screenings")]
+    public async Task<IActionResult> GetScreeningsBySupplierId(
+        [FromRoute] int supplierId,
+        [FromQuery] int page = 1,
+        [FromQuery] int limit = 10,
+        [FromQuery] ScreeningSource? source = null,
+        CancellationToken cancellationToken = default)
+    {
+        var query = SupplierScreeningQueryFromRequestAssembler.ToQuery(supplierId, page, limit, source);
+        var screenings = await _screeningQueryService.Handle(query, cancellationToken);
+        var responses = screenings.Select(s => SupplierScreeningResponseFromEntityAssembler.ToResponseFromEntity(s, source)).ToList();
+        return Ok(responses);
     }
 
     private async Task<IActionResult> OkSupplierResponse(int supplierId)

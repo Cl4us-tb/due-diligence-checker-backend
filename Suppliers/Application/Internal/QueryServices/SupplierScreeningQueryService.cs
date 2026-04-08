@@ -16,6 +16,9 @@ public class SupplierScreeningQueryService : ISupplierScreeningQueryService
 
     public async Task<IEnumerable<SupplierScreening>> Handle(GetSupplierScreeningsBySupplierIdQuery query, CancellationToken cancellationToken = default)
     {
-        return await _supplierScreeningRepository.ListBySupplierIdAsync(query.SupplierId);
+        var page = query.Page < 1 ? 1 : query.Page;
+        var limit = query.Limit < 1 ? 10 : query.Limit;
+
+        return await _supplierScreeningRepository.ListBySupplierIdAsync(query.SupplierId, query.Source, page, limit);
     }
 }

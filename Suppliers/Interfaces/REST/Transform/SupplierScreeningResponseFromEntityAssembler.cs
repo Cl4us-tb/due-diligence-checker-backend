@@ -1,4 +1,5 @@
 using DueDiligenceChecker.Suppliers.Domain.Model.Entities.History;
+using DueDiligenceChecker.Suppliers.Domain.Model.ValueObjects;
 using DueDiligenceChecker.Suppliers.Interfaces.REST.Resources;
 
 namespace DueDiligenceChecker.Suppliers.Interfaces.REST.Transform;
@@ -8,6 +9,7 @@ public static class SupplierScreeningResponseFromEntityAssembler
     public static SupplierScreeningResponse ToResponseFromEntity(SupplierScreening screening)
     {
         return new SupplierScreeningResponse(
+            screening.SupplierScreeningId,
             screening.SupplierId,
             screening.ExecutedAt,
             screening.HasHits,
@@ -15,6 +17,33 @@ public static class SupplierScreeningResponseFromEntityAssembler
             screening.InterpolHits.Select(ToResponseFromEntity).ToList(),
             screening.SecopHits.Select(ToResponseFromEntity).ToList(),
             screening.SmvHits.Select(ToResponseFromEntity).ToList());
+    }
+
+    public static SupplierScreeningResponse ToResponseFromEntity(SupplierScreening screening, ScreeningSource? sourceFilter)
+    {
+        if (sourceFilter == null) return ToResponseFromEntity(screening);
+
+        var interpolHits = sourceFilter == ScreeningSource.Interpol
+            ? screening.InterpolHits.Select(ToResponseFromEntity).ToList()
+            : new List<InterpolScreeningHitResponse>();
+
+        var secopHits = sourceFilter == ScreeningSource.Secop
+            ? screening.SecopHits.Select(ToResponseFromEntity).ToList()
+            : new List<SecopScreeningHitResponse>();
+
+        var smvHits = sourceFilter == ScreeningSource.Smv
+            ? screening.SmvHits.Select(ToResponseFromEntity).ToList()
+            : new List<SmvScreeningHitResponse>();
+
+        return new SupplierScreeningResponse(
+            screening.SupplierScreeningId,
+            screening.SupplierId,
+            screening.ExecutedAt,
+            screening.HasHits,
+            screening.SourcesChecked,
+            interpolHits,
+            secopHits,
+            smvHits);
     }
 
     private static InterpolScreeningHitResponse ToResponseFromEntity(InterpolScreeningHit hit)
@@ -61,4 +90,3 @@ public static class SupplierScreeningResponseFromEntityAssembler
             hit.ResolutiveResolutionDate);
     }
 }
-

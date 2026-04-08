@@ -1,5 +1,6 @@
 using DueDiligenceChecker.Screening.Domain.Model.Queries;
 using DueDiligenceChecker.Screening.Interfaces.ACL;
+using DueDiligenceChecker.Shared.Domain.Repositories;
 using DueDiligenceChecker.Suppliers.Application.InboundServices;
 using DueDiligenceChecker.Suppliers.Domain.Model.Commands;
 using DueDiligenceChecker.Suppliers.Domain.Model.Entities.History;
@@ -11,14 +12,20 @@ namespace DueDiligenceChecker.Suppliers.Application.Internal.CommandServices;
 public class SupplierScreeningCommandService : ISupplierScreeningCommandService
 {
     private readonly ISupplierRepository _supplierRepository;
+    private readonly ISupplierScreeningRepository _supplierScreeningRepository;
     private readonly IScreeningContextFacade _screeningContextFacade;
+    private readonly IUnitOfWork _unitOfWork;
 
     public SupplierScreeningCommandService(
         ISupplierRepository supplierRepository,
-        IScreeningContextFacade screeningContextFacade)
+        ISupplierScreeningRepository supplierScreeningRepository,
+        IScreeningContextFacade screeningContextFacade,
+        IUnitOfWork unitOfWork)
     {
         _supplierRepository = supplierRepository;
+        _supplierScreeningRepository = supplierScreeningRepository;
         _screeningContextFacade = screeningContextFacade;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<SupplierScreening> Handle(ExecuteSupplierScreeningCommand command, CancellationToken cancellationToken = default)
@@ -61,12 +68,16 @@ public class SupplierScreeningCommandService : ISupplierScreeningCommandService
         {
             foreach (var representative in supplier.Representatives)
             {
-                var interpolItems = await _screeningContextFacade.CheckInterpolAsync(
-                    new InterpolRedNoticesQuery(
+                var interpolQuery = representative.Age == null && representative.Nationality == null
+                    ? new InterpolRedNoticesQuery(representative.LastName, representative.FirstName)
+                    : new InterpolRedNoticesQuery(
                         representative.LastName,
                         representative.FirstName,
                         representative.Nationality,
-                        representative.Age),
+                        representative.Age);
+
+                var interpolItems = await _screeningContextFacade.CheckInterpolAsync(
+                    interpolQuery,
                     cancellationToken);
 
                 foreach (var item in interpolItems)
@@ -102,6 +113,9 @@ public class SupplierScreeningCommandService : ISupplierScreeningCommandService
                     item.ResolutiveResolutionDate);
             }
         }
+
+        await _supplierScreeningRepository.AddAsync(screening);
+        await _unitOfWork.CompleteAsync();
 
         return screening;
     }
