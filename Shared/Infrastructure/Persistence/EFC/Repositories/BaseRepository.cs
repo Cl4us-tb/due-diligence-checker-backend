@@ -13,27 +13,27 @@ public abstract class BaseRepository<TEntity> : IBaseRepository<TEntity> where T
         Context = context;
     }
 
-    public async Task AddAsync(TEntity entity)
+    public virtual async Task AddAsync(TEntity entity)
     {
         await Context.Set<TEntity>().AddAsync(entity);
     }
 
-    public async Task<TEntity?> FindByIdAsync(int id)
+    public virtual async Task<TEntity?> FindByIdAsync(int id)
     {
         return await Context.Set<TEntity>().FindAsync(id);
     }
 
-    public void Update(TEntity entity)
+    public virtual void Update(TEntity entity)
     {
         Context.Set<TEntity>().Update(entity);
     }
 
-    public void Remove(TEntity entity)
+    public virtual void Remove(TEntity entity)
     {
         Context.Set<TEntity>().Remove(entity);
     }
 
-    public async Task<IEnumerable<TEntity>> ListAsync()
+    public virtual async Task<IEnumerable<TEntity>> ListAsync()
     {
         return await Context.Set<TEntity>().ToListAsync();
     }

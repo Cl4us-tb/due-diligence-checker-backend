@@ -118,6 +118,8 @@ builder.Services.AddScoped<ISupplierRepository, SupplierRepository>();
 builder.Services.AddScoped<ISupplierScreeningRepository, SupplierScreeningRepository>();
 builder.Services.AddScoped<ISupplierCommandService, SupplierCommandService>();
 builder.Services.AddScoped<ISupplierQueryService, SupplierQueryService>();
+builder.Services.AddScoped<ISupplierScreeningCommandService, SupplierScreeningCommandService>();
+builder.Services.AddScoped<ISupplierScreeningQueryService, SupplierScreeningQueryService>();
 
 
 var app = builder.Build();
