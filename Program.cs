@@ -28,10 +28,11 @@ using DueDiligenceChecker.Screening.Application.Internal.QueryServices;
 using DueDiligenceChecker.Screening.Application.OutboundServices;
 using DueDiligenceChecker.Screening.Infrastructure.Scraping;
 using DueDiligenceChecker.Screening.Interfaces.ACL;
+using Microsoft.AspNetCore.RateLimiting;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ConfiguraciÃ³n de Base de Datos SQL Server
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
@@ -41,6 +42,54 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
+
+var configuredOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>();
+if (configuredOrigins == null || configuredOrigins.Length == 0)
+{
+    var rawOrigins = builder.Configuration["Cors:AllowedOrigins"];
+    configuredOrigins = string.IsNullOrWhiteSpace(rawOrigins)
+        ? ["http://localhost:5173"]
+        : rawOrigins
+            .Split([',', ';'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Where(o => !string.IsNullOrWhiteSpace(o))
+            .ToArray();
+}
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("Frontend", policy =>
+    {
+        policy.WithOrigins(configuredOrigins)
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
+
+var globalPermitLimit = builder.Configuration.GetValue<int?>("RateLimiting:Global:PermitLimit") ?? 20;
+var globalWindowSeconds = builder.Configuration.GetValue<int?>("RateLimiting:Global:WindowSeconds") ?? 60;
+
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
+    {
+        if (HttpMethods.IsOptions(context.Request.Method))
+            return RateLimitPartition.GetNoLimiter("preflight");
+
+        var ip = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+
+        return RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: ip,
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = globalPermitLimit,
+                Window = TimeSpan.FromSeconds(globalWindowSeconds),
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit = 0
+            });
+    });
+});
 
 builder.Services.AddHttpClient<ISecopScraper, SecopScraper>();
 builder.Services.AddScoped<IInterpolScraper, InterpolScraper>();
@@ -52,7 +101,7 @@ builder.Services.AddScoped<ISmvQueryService, SmvQueryService>();
 
 builder.Services.AddScoped<IScreeningContextFacade, ScreeningContextFacade>();
 
-// Configurar autenticaciÃ³n JWT (provisional)
+
 var jwtSecret = builder.Configuration["JwtSettings:Secret"];
 if (string.IsNullOrEmpty(jwtSecret))
 {
@@ -126,7 +175,6 @@ var app = builder.Build();
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
-// 4. Asegurar que la base de datos se cree/actualice al iniciar
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
@@ -134,7 +182,6 @@ using (var scope = app.Services.CreateScope())
     context.Database.Migrate();
 }
 
-// 5. Configurar el pipeline HTTP
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -142,9 +189,10 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseCors("Frontend");
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
-// UN SOLO app.Run() y nada mÃ¡s despuÃ©s de esto
 app.Run();
