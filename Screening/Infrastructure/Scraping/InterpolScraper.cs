@@ -68,17 +68,24 @@ public class InterpolScraper : IInterpolScraper
                 }
             }
 
+            var resultsCountLocator = page.Locator("#searchResults");
+            await resultsCountLocator.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible });
+            var initialResultsCountText = (await resultsCountLocator.InnerTextAsync()).Trim();
+
             await page.Locator("#submit").ClickAsync();
 
             await page.WaitForFunctionAsync(
-                "() => { const el = document.getElementById('searchResults'); return el && el.innerText.trim() !== '6452'; }",
-                null, new PageWaitForFunctionOptions { Timeout = 30000 });
+                "(initial) => { const el = document.getElementById('searchResults'); if (!el) return false; const t = el.innerText.trim(); return t !== (initial || '').trim(); }",
+                initialResultsCountText,
+                new PageWaitForFunctionOptions { Timeout = 60000 });
 
-            var resultsCount = (await page.Locator("#searchResults").InnerTextAsync()).Trim();
-            if (resultsCount == "0" || string.IsNullOrEmpty(resultsCount))
+            var resultsCountText = (await resultsCountLocator.InnerTextAsync()).Trim();
+            var digitsOnly = new string(resultsCountText.Where(char.IsDigit).ToArray());
+            if (!int.TryParse(digitsOnly, out var totalHits) || totalHits == 0)
                 return Array.Empty<InterpolRedNotice>();
 
             var firstResult = page.Locator(".redNoticeItem__labelLink").First;
+            await firstResult.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible });
             await firstResult.ClickAsync();
 
             var detailPanel = page.Locator("#singlePanel");
