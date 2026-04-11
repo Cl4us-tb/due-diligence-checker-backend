@@ -22,7 +22,7 @@ public class Representative
         FirstName = RequireNonEmpty(firstName, nameof(firstName));
         LastName = RequireNonEmpty(lastName, nameof(lastName));
         Age = RequireAdultAgeOrNull(age, nameof(age));
-        Nationality = RequireNationalityCodeOrNull(nationality, nameof(nationality));
+        Nationality = NormalizeNationalityOrNull(nationality);
     }
 
     internal void Update(string role, string firstName, string lastName, int? age, string? nationality)
@@ -31,7 +31,7 @@ public class Representative
         FirstName = RequireNonEmpty(firstName, nameof(firstName));
         LastName = RequireNonEmpty(lastName, nameof(lastName));
         Age = RequireAdultAgeOrNull(age, nameof(age));
-        Nationality = RequireNationalityCodeOrNull(nationality, nameof(nationality));
+        Nationality = NormalizeNationalityOrNull(nationality);
     }
 
     private static string RequireNonEmpty(string value, string paramName)
@@ -50,18 +50,12 @@ public class Representative
         return value;
     }
 
-    private static string? RequireNationalityCodeOrNull(string? value, string paramName)
+    private static string? NormalizeNationalityOrNull(string? value)
     {
         if (value == null) return null;
 
         var trimmed = value.Trim();
-        if (trimmed.Length is < 2 or > 3)
-            throw new ArgumentException("La nacionalidad debe ser un código de 2 o 3 letras (ej: PE o PER).", paramName);
-
-        if (!trimmed.All(char.IsLetter))
-            throw new ArgumentException("La nacionalidad solo puede contener letras.", paramName);
-
-        return trimmed.ToUpperInvariant();
+        return string.IsNullOrWhiteSpace(trimmed) ? null : trimmed;
     }
 }
 
